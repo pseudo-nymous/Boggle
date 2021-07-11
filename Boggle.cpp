@@ -17,6 +17,7 @@ class Boggle {
         int col;
         vector<string>mat;
         vector<vector<bool>>visited;
+        vector<vector<int>>dir={{0,1},{1,1},{1,0},{1,-1},{0,-1},{-1,-1},{-1,0},{-1,1}};
         set<string>solutions;
         Boggle(int n,int m) {
             this->row=n;
@@ -36,20 +37,28 @@ class Boggle {
             }
         }
         void printSolution(Trie* root){
-            cout<<"Finding Solutions";
-            for(int i=0;i<50;i++)
-            {
-                cout<<"."<<flush;
-                sleep_for(microseconds(rand()%200000+1));
-            }
+            auto sstart=chrono::high_resolution_clock::now();
             cout<<endl;
             if(solutions.size()==0)
                 findSolution(root);
+            if(solutions.size()!=0) {
+                if(solutions.size()==1)
+                    cout<<"Possible word is:"<<endl;
+                else cout<<"Possible words are:"<<endl;
+            }
             for(auto i:solutions)
                 cout<<i<<endl;
             if(solutions.size()==0)
                 cout<<"No words are found in Boggle"<<endl;
             else cout<<"Total "<<solutions.size()<<((solutions.size()==1)?(" word"):(" words"))<<" found"<<endl;
+            auto eend=chrono::high_resolution_clock::now();
+            long double time_taken=((chrono::duration_cast<chrono::nanoseconds>(eend - sstart).count())*(1e-9))*1000;
+            cout<<"Time taken: "<<fixed<<time_taken<<setprecision(9)<<" milisecs"<<endl;
+        }
+        bool isValidMove(int i,int j) {
+                if(i>=0 && j>=0 && i<row && j<col)
+                        return true;
+                return false;
         }
 };
 void searchWord(int i,int j,string s,Boggle* boggle,Trie* root) {
@@ -60,20 +69,19 @@ void searchWord(int i,int j,string s,Boggle* boggle,Trie* root) {
     boggle->visited[i][j]=true;
     if(root->child[x-'a']->isLeaf)
         boggle->solutions.insert(s);
-    if(j+1<boggle->col && !(boggle->visited[i][j+1]))
-        searchWord(i,j+1,s,boggle,root->child[x-'a']);
-    if(i+1<boggle->row && !boggle->visited[i+1][j])
-        searchWord(i+1,j,s,boggle,root->child[x-'a']);
-    if(j-1>=0 && !boggle->visited[i][j-1])
-        searchWord(i,j-1,s,boggle,root->child[x-'a']);
-    if(i-1>=0 && !boggle->visited[i-1][j])
-        searchWord(i-1,j,s,boggle,root->child[x-'a']);
+    for(int k=0;k<8;k++)
+    {
+            int r=i+boggle->dir[k][0];
+            int c=j+boggle->dir[k][1];
+            if(boggle->isValidMove(r,c) && !(boggle->visited[r][c]))
+                    searchWord(r,c,s,boggle,root->child[x-'a']);
+    }
     s.pop_back();
     boggle->visited[i][j]=false;
 }
 int main() {
     Trie* root=new Trie(dictionary);
-    cout<<"Enter desired number of rows and cols"<<endl;
+    cout<<"Enter number of rows and cols"<<endl;
     int n,m;
     cin>>n>>m;
     Boggle board(n,m);
